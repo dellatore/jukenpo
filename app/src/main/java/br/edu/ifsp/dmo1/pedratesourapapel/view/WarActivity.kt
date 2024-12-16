@@ -10,9 +10,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import br.edu.ifsp.dmo1.pedratesourapapel.R
 import br.edu.ifsp.dmo1.pedratesourapapel.databinding.ActivityWarBinding
+import br.edu.ifsp.dmo1.pedratesourapapel.model.Paper
 import br.edu.ifsp.dmo1.pedratesourapapel.model.Player
+import br.edu.ifsp.dmo1.pedratesourapapel.model.Rock
+import br.edu.ifsp.dmo1.pedratesourapapel.model.Scissors
 import br.edu.ifsp.dmo1.pedratesourapapel.model.War
 import br.edu.ifsp.dmo1.pedratesourapapel.model.Weapon
+import kotlin.random.Random
 
 class WarActivity : AppCompatActivity() {
     private lateinit var binding: ActivityWarBinding
@@ -20,18 +24,37 @@ class WarActivity : AppCompatActivity() {
     private lateinit var war: War
     private var weaponPlayer1: Weapon? = null
     private var weaponPlayer2: Weapon? = null
+    private var isBotGame: Boolean = false
+    private var weapons = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityWarBinding.inflate(layoutInflater)
+        val extras = intent.extras
+        if (extras != null) {
+            isBotGame = extras.getBoolean("ISBOT")
+        }
+        if (isBotGame) {
+            binding.buttonWeapon2.visibility = View.INVISIBLE  // Esconde o botão do jogador 2
+            selectRandomWeaponForBot()  // Seleciona uma arma aleatória para o bot
+        }
         setContentView(binding.root)
         openBundle()
         updateUI()
         configListener()
         configResultLauncher()
+
+
     }
+
+    private fun selectRandomWeaponForBot() {
+        val weapons = arrayListOf(Paper,Rock,Scissors)
+        weaponPlayer2 = weapons[Random.nextInt(0,3)]
+    }
+
     private fun battle() {
         val winner: Player?
-        if (weaponPlayer1 != null && weaponPlayer2 != null) {
+        if (weaponPlayer1 != null || weaponPlayer2 != null) {
             winner = war.toBattle(weaponPlayer1!!, weaponPlayer2!!)
             if (winner != null) {
                 Toast.makeText(
@@ -67,7 +90,9 @@ class WarActivity : AppCompatActivity() {
     }
     private fun configListener() {
         binding.buttonWeapon1.setOnClickListener{ startSelectionActivity(1) }
-        binding.buttonWeapon2.setOnClickListener{ startSelectionActivity(2) }
+        if (!isBotGame){
+            binding.buttonWeapon2.setOnClickListener{ startSelectionActivity(2) }
+        }
         binding.buttonFight.setOnClickListener { battle() }
         binding.buttonClose.setOnClickListener { finish() }
     }
@@ -133,7 +158,9 @@ class WarActivity : AppCompatActivity() {
         binding.labelPlayer2.text = war.opponent2.name
         updateScoreBoard()
         binding.buttonWeapon1.text = "${war.opponent1.name} ${getString(R.string.gum_selection)}"
-        binding.buttonWeapon2.text = "${war.opponent2.name} ${getString(R.string.gum_selection)}"
+        if (!isBotGame){
+            binding.buttonWeapon2.text = "${war.opponent2.name} ${getString(R.string.gum_selection)}"
+        }
     }
 }
 
